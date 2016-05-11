@@ -1,6 +1,7 @@
 
 var twitter = require('twitter');
 var mongodb = require('mongodb');
+var shortid = require('shortid');
 
 var config = require('./config');
 
@@ -16,8 +17,8 @@ mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport +
   coll.ensureIndex('timestamp_ms', function(err, i) {
     t.stream('statuses/filter', {'track': config.track_word}, function(stream) {
       stream.on('data', function (data) {
+        data['_id'] = shortid.generate();
         coll.save(data);
-        console.log(data);
       });
     });
   });
