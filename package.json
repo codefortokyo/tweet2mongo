@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/codefortokyo/tweet-stream/issues"
   },
-  "homepage": "https://github.com/codefortokyo/tweet-stream#readme"
+  "homepage": "https://github.com/codefortokyo/tweet-stream#readme",
+  "dependencies": {
+    "twitter": "^1.2.5"
+  },
+  "devDependencies": {
+    "eslint": "^2.9.0"
+  }
 }
