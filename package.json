@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/codefortokyo/tweet-stream#readme",
   "dependencies": {
+    "mongodb": "^2.1.18",
     "twitter": "^1.2.5"
   },
   "devDependencies": {

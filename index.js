@@ -1,5 +1,6 @@
 
 var twitter = require('twitter');
+var mongodb = require('mongodb');
 
 var config = require('./config');
 
