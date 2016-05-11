@@ -1,0 +1,19 @@
+{
+  "name": "tweet-stream",
+  "version": "0.0.1",
+  "description": "fetch tweets from twitter streaming API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codefortokyo/tweet-stream.git"
+  },
+  "author": "osoken/Code for Tokyo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/codefortokyo/tweet-stream/issues"
+  },
+  "homepage": "https://github.com/codefortokyo/tweet-stream#readme"
+}
