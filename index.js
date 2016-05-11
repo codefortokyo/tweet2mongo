@@ -11,10 +11,14 @@ var t = new twitter({
   access_token_secret: config.twitter_access_token_secret
 });
 
-var option = {'track': config.track_word};
-
-t.stream('statuses/filter', option, function(stream) {
-  stream.on('data', function (data) {
-    console.log(data);
+mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport + '/' + config.dbname, function(err, database) {
+  var coll = database.collection('tweet');
+  coll.ensureIndex('timestamp_ms', function(err, i) {
+    t.stream('statuses/filter', {'track': config.track_word}, function(stream) {
+      stream.on('data', function (data) {
+        coll.save(data);
+        console.log(data);
+      });
+    });
   });
 });
