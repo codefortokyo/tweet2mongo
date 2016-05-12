@@ -38,6 +38,20 @@ mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport +
       });
     });
 
+    app.get('/api/geotweet', function(req, res) {
+      var timestamp_ms = req.query.timestamp_ms || new Date().getTime();
+      var limit = req.query.limit || 10;
+      var skip = req.query.skip || 0;
+      coll.find({'$and': [{timestamp_ms: {'$lt': ''+timestamp_ms}}, {'$or': [{place: {'$ne': null}}, {coordinages: {'$ne': null}}]}]}, {limit:limit,skip:skip,sort:{'timestamp_ms':-1}}).toArray(function(err, data)
+      {
+        if (err != null)
+        {
+          return res.status(400).send(err);
+        }
+        return res.json(data);
+      });
+    });
+
     socketio.on('connection', function(socket) {
       console.log('a user connected');
     });
