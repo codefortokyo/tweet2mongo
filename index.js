@@ -45,8 +45,6 @@ mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport +
     http.listen(config.webui_port, function() {
       console.log('listening on *:' + config.webui_port);
     });
-
-/*
     t.stream('statuses/filter', {'track': config.track_word}, function(stream) {
       stream.on('data', function (data) {
         data['_id'] = shortid.generate();
@@ -54,6 +52,5 @@ mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport +
         socketio.emit('tweet', data);
       });
     });
-*/
   });
 });
