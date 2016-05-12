@@ -39,6 +39,10 @@ var maybeFetch = function() {
           return;
         }
         timestamp_ms = data[data.length-1].timestamp_ms;
+        if (loadmore.node().getBoundingClientRect().top < document.documentElement.clientHeight + 100) {
+          maybeFetch();
+        }
+
         loading = null;
       });
     }, 200);
