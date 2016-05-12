@@ -10,6 +10,6 @@
 var ul = d3.select('body').append('ul');
 var socket = io();
 socket.on('tweet', function(msg) {
-  ul.insert('li', 'li').text(msg);
+  ul.insert('li', 'li').text(JSON.stringify(msg));
 });
 </script>
