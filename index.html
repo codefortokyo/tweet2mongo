@@ -7,7 +7,7 @@
 
 <script>
 var ul = d3.select('body').append('ul');
-var loadmore = ul.append('li');
+var loadmore = d3.select('body').append('div');
 var timestamp_ms = new Date().getTime();
 var loading = null;
 var socket = io();
@@ -16,7 +16,7 @@ var textify = function(data) {
   return JSON.stringify(data.coordinates) + ' ' + data.text;
 };
 socket.on('tweet', function(msg) {
-  ul.insert('li', 'li').text(textify(d));
+  ul.insert('li', 'li').text(textify(msg));
 });
 
 var maybeFetch = function() {
