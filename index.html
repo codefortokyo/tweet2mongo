@@ -13,7 +13,7 @@ var loading = null;
 var socket = io();
 var textify = function(data) {
 //  return JSON.stringify(data);
-  return JSON.stringify(data.coordinates) + ' ' + data.text;
+  return JSON.stringify(data.coordinates) + ' ' + JSON.stringify(data.place) + ' ' + data.text;
 };
 socket.on('tweet', function(msg) {
   ul.insert('li', 'li').text(textify(msg));
