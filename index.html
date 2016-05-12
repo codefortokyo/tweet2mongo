@@ -11,8 +11,12 @@ var loadmore = ul.append('li');
 var timestamp_ms = new Date().getTime();
 var loading = null;
 var socket = io();
+var textify = function(data) {
+//  return JSON.stringify(data);
+  return JSON.stringify(data.coordinates) + ' ' + data.text;
+};
 socket.on('tweet', function(msg) {
-  ul.insert('li', 'li').text(JSON.stringify(msg));
+  ul.insert('li', 'li').text(textify(d));
 });
 
 var maybeFetch = function() {
@@ -28,7 +32,7 @@ var maybeFetch = function() {
           return;
         }
         data.forEach(function(d) {
-          ul.insert('li', 'li').text(JSON.stringify(d));
+          ul.append('li').text(textify(d));
         });
         if (data.length == 0) {
           load_more_tweets = null;
