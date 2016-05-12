@@ -5,11 +5,45 @@
 
 <body style='margin:0;padding:0;'>
 
-
 <script>
 var ul = d3.select('body').append('ul');
+var loadmore = ul.append('li');
+var timestamp_ms = new Date().getTime();
+var loading = null;
 var socket = io();
 socket.on('tweet', function(msg) {
   ul.insert('li', 'li').text(JSON.stringify(msg));
 });
+
+var maybeFetch = function() {
+  if (loadmore.node().getBoundingClientRect().top < document.documentElement.clientHeight + 100)
+  {
+    if (loading !== null) {
+      clearTimeout(loading);
+    }
+    loading = setTimeout(function() {
+      d3.json('/api/tweet?timestamp_ms=' + timestamp_ms, function(err, data) {
+        if (err != null) {
+          load_more_tweets = null;
+          return;
+        }
+        data.forEach(function(d) {
+          ul.insert('li', 'li').text(JSON.stringify(d));
+        });
+        if (data.length == 0) {
+          load_more_tweets = null;
+          return;
+        }
+        timestamp_ms = data[data.length-1].timestamp_ms;
+        loading = null;
+      });
+    }, 200);
+  }
+}
+
+d3.select(window)
+  .on("scroll", maybeFetch)
+  .on("resize", maybeFetch)
+  .each(maybeFetch);
+
 </script>
