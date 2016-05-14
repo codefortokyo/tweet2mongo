@@ -42,7 +42,7 @@ mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport +
       var timestamp_ms = req.query.timestamp_ms || new Date().getTime();
       var limit = req.query.limit || 10;
       var skip = req.query.skip || 0;
-      coll.find({'$and': [{timestamp_ms: {'$lt': ''+timestamp_ms}}, {'$or': [{place: {'$ne': null}}, {coordinages: {'$ne': null}}]}]}, {limit:limit,skip:skip,sort:{'timestamp_ms':-1}}).toArray(function(err, data)
+      coll.find({'$and': [{timestamp_ms: {'$lt': ''+timestamp_ms}}, {'$or': [{place: {'$ne': null}}, {coordinates: {'$ne': null}}]}]}, {limit:limit,skip:skip,sort:{'timestamp_ms':-1}}).toArray(function(err, data)
       {
         if (err != null)
         {
