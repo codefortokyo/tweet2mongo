@@ -14,7 +14,7 @@ def map_encode(d):
 
 if __name__ == '__main__':
   w = csv.writer(sys.stdout, lineterminator='\n')
-  w.writerow(['time', 'latitude', 'longitude', 'text', 'username'])
+  w.writerow(['time', 'latitude', 'longitude', 'lang', 'text', 'username'])
   for d in json.loads(sys.stdin.read()):
     p = pointify(d)
-    w.writerow(map_encode((str(d['timestamp_ms']), str(p[1]), str(p[0]), d['text'], d['user']['screen_name'])))
+    w.writerow(map_encode((str(d['timestamp_ms']), str(p[1]), str(p[0]), d['lang'], d['text'], d['user']['screen_name'])))
