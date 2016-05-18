@@ -11,9 +11,10 @@ var loadmore = d3.select('body').append('div');
 var timestamp_ms = new Date().getTime();
 var loading = null;
 var socket = io();
+var timeFormat = d3.time.format('%Y-%m-%d %H:%M:%S');
 var textify = function(data) {
 //  return JSON.stringify(data);
-  return JSON.stringify(data.coordinates) + ' ' + JSON.stringify(data.place) + ' ' + data.text;
+  return timeFormat(new Date(data.timestamp_ms)) + ' ' + JSON.stringify(data.coordinates) + ' ' + JSON.stringify(data.place) + ' ' + data.text;
 };
 socket.on('tweet', function(msg) {
   ul.insert('li', 'li').text(textify(msg));
@@ -42,7 +43,6 @@ var maybeFetch = function() {
         if (loadmore.node().getBoundingClientRect().top < document.documentElement.clientHeight + 100) {
           maybeFetch();
         }
-
         loading = null;
       });
     }, 200);
