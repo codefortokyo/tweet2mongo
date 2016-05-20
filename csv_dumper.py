@@ -5,8 +5,6 @@ from datetime import datetime
 
 from shapely.geometry import shape, mapping
 
-import pymongo
-
 def pointify(d):
   if 'coordinates' in d and d['coordinates'] is not None:
     return mapping(shape(d['coordinates']).centroid)['coordinates']
