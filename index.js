@@ -59,7 +59,13 @@ mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport +
     http.listen(config.webui_port, function() {
       console.log('listening on *:' + config.webui_port);
     });
-    t.stream('statuses/filter', {'track': config.track_word}, function(stream) {
+    var condition = {};
+    if (typeof config.search == 'string') {
+      condition = {track: config.search.split('+').map(function(d) {return decodeURIComponent(d);})};
+    } else {
+      condition = config.search;
+    }
+    t.stream('statuses/filter', condition, function(stream) {
       stream.on('data', function (data) {
         data['_id'] = shortid.generate();
         coll.save(data);
