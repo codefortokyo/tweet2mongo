@@ -61,10 +61,11 @@ mongodb.MongoClient.connect('mongodb://' + config.dbhost + ':' + config.dbport +
     });
     var condition = {};
     if (typeof config.search == 'string') {
-      condition = {track: config.search.split('+').map(function(d) {return decodeURIComponent(d);})};
+      condition = {track: config.search};
     } else {
       condition = config.search;
     }
+    console.log(condition);
     t.stream('statuses/filter', condition, function(stream) {
       stream.on('data', function (data) {
         data['_id'] = shortid.generate();
