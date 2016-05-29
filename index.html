@@ -14,7 +14,7 @@ var socket = io();
 var timeFormat = d3.time.format('%Y-%m-%d %H:%M:%S');
 var textify = function(data) {
 //  return JSON.stringify(data);
-  return timeFormat(new Date(data.timestamp_ms)) + ' ' + JSON.stringify(data.coordinates) + ' ' + JSON.stringify(data.place) + ' ' + data.text;
+  return timeFormat(new Date(+data.timestamp_ms)) + ' ' + JSON.stringify(data.coordinates) + ' ' + JSON.stringify(data.place) + ' ' + data.text;
 };
 socket.on('tweet', function(msg) {
   ul.insert('li', 'li').text(textify(msg));

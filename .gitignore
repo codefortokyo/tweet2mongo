@@ -35,3 +35,5 @@ node_modules
 .config.json
 mongod.conf
 mongodb
+
+.DS_Store
