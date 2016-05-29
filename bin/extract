@@ -1,0 +1,35 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var csv = require('csv');
+var d3 = require('d3');
+
+var db = require('../db');
+
+var argv = process.argv.slice(2);
+var ts = new Date().getTime();
+if (argv.length > 0) {
+  ts = +process.argv[0];
+}
+
+var stringifier = csv.stringify();
+
+function pointify(d) {
+  if (d.coordinates != null) {
+    return d3.geo.centroid(d.coordinates);
+  }
+  return d3.geo.centroid(d.place.bounding_box);
+}
+
+db.getTweet({timestamp_ms:{$lt:''+ts}}, {}, function(err, res) {
+  if (err != null) {
+    throw err;
+  }
+  stringifier.pipe(process.stdout);
+  stringifier.write(['id', 'timestamp', 'longitude', 'latitude', 'user', 'text']);
+  res.forEach(function(d) {
+    var p = pointify(d);
+    stringifier.write([d.id_str, new Date(d.created_at).getTime(), p[0], p[1], d.user.screen_name, d.text]);
+  });
+  db.exit();
+});
