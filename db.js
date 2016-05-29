@@ -95,4 +95,8 @@ db.getTweet = function(cond, ops, cb) {
   });
 }
 
+db.exit = function() {
+  client.close();
+}
+
 module.exports = db;
