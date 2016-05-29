@@ -19,7 +19,7 @@ socketio.on('connection', function(socket) {
   console.log('a user connected');
 });
 
-t.stream(config.search, function (data) {
+t.stream(config.stream_filter, function (data) {
   socketio.emit('tweet', data);
   db.storeTweet(data, function(e, r) {});
 });
