@@ -16,9 +16,12 @@ var t = {};
 var retry = 100;
 
 t.stream = function(cond, onData) {
-  db.storeSearch(cond, function(e, d) {
+  db.storeSearch(cond, function(e, search) {
     client.stream('statuses/filter', cond, function(stream) {
-      stream.on('data', onData);
+      stream.on('data', function(data) {
+        db.storeTweet(data, search, function(e, r){});
+        return onData(date);
+      });
       stream.on('error', function(err) {
         db.errorLog(err);
         setTimeout(function() {
