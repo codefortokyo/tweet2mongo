@@ -20,14 +20,12 @@ t.stream = function(cond, onData) {
     client.stream('statuses/filter', cond, function(stream) {
       stream.on('data', function(data) {
         db.storeTweet(data, search, function(e, r){});
-        return onData(date);
+        return onData(data);
       });
       stream.on('error', function(err) {
-        db.errorLog(err);
-        setTimeout(function() {
-          t.stream(cond, onData);
-        }, retry);
-        retry *= 2;
+        if (err.code !== void 0) {
+          db.errorLog(err);
+        }
       });
     });
   });
