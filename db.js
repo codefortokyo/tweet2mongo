@@ -24,9 +24,9 @@ var enter = function(cb) {
         }
         retry = retryMax;
         client = database;
-        client.ensureIndex('tweet', {'timestamp_ms': -1}, function(e, i) {});
-        client.ensureIndex('tweet', 'search_id', function(e, i) {});
-        client.ensureIndex('search', 'condition', function(e, i) {});
+        client.ensureIndex('tweet', {'timestamp_ms': -1}, function() {});
+        client.ensureIndex('tweet', 'search_id', function() {});
+        client.ensureIndex('search', 'condition', function() {});
         return cb(null, client);
       }
     );
@@ -48,13 +48,13 @@ db.storeTweet = function(t, s, cb) {
     c.collection('tweet').update(
       {_id: t._id}, t, {upsert: true}, function(err, doc) {
         if (err != null) {
-          collection = null;
+          client = null;
           return db.storeTweet(t, s, cb);
         }
         return cb(null, doc);
       });
   });
-}
+};
 
 var searchLog = function(s) {
   enter(function(e, c) {
@@ -67,7 +67,7 @@ var searchLog = function(s) {
       timestamp: new Date()
     });
   });
-}
+};
 
 db.errorLog = function(error) {
   console.log(new Date() + ': ' + error);
@@ -81,7 +81,7 @@ db.errorLog = function(error) {
       timestamp: new Date()
     });
   });
-}
+};
 
 db.storeSearch = function(s, cb) {
   enter(function (e, c) {
@@ -91,7 +91,7 @@ db.storeSearch = function(s, cb) {
     c.collection('search').findOne({condition: s}, function(err, doc) {
       if (err != null) {
         db.errorLog(err);
-        collection = null;
+        client = null;
         return db.storeSearch(s, cb);
       }
       if (doc != null) {
@@ -101,19 +101,20 @@ db.storeSearch = function(s, cb) {
         var _doc = {
           _id: shortid.generate(),
           condition: s
-          };
+        };
         searchLog(_doc);
         return c.collection('search').insert(_doc, function(err, doc) {
           if (err != null) {
             db.errorLog(err);
-            collection = null;
+            client = null;
             return db.storeSearch(s, cb);
           }
+          cb(null, doc);
         });
       }
     });
   });
-}
+};
 
 db.getTweet = function(cond, ops, cb) {
   enter(function(e, c) {
@@ -122,16 +123,16 @@ db.getTweet = function(cond, ops, cb) {
     }
     c.collection('tweet').find(cond, ops).toArray(function(err, docs) {
       if (err != null) {
-        collection = null;
+        client = null;
         return db.getTweet(cond, ops, cb);
       }
       return cb(null, docs);
     });
   });
-}
+};
 
 db.exit = function() {
   client.close();
-}
+};
 
 module.exports = db;
