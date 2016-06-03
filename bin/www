@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('tweet-stream:server');
 var http = require('http');
+var socketio = require('socket.io')(http);
+var t = require('../tweet-searcher');
 
 var config = require('../config');
 
@@ -50,6 +52,14 @@ function normalizePort(val) {
 
   return false;
 }
+
+socketio.on('connection', function(socket) {
+  console.log('a user connected');
+});
+
+t.stream(config.stream_filter, function (data) {
+  socketio.emit('tweet', data);
+});
 
 /**
  * Event listener for HTTP server "error" event.
