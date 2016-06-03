@@ -13,7 +13,6 @@ var client = new twitter({
 
 
 var t = {};
-var retry = 100;
 
 t.stream = function(cond, onData) {
   db.storeSearch(cond, function(e, search) {
