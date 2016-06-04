@@ -24,8 +24,12 @@ t.stream = function(cond, onData) {
     client.stream('statuses/filter', cond, function(stream) {
       retry = retryMax;
       stream.on('data', function(data) {
-        db.storeTweet(data, search, function(e, r){});
-        return onData(data);
+        db.storeTweet(data, search, function() {
+          if (e != null) {
+            throw e;
+          }
+          return onData(data);
+        });
       });
       stream.on('error', function(err) {
         if (err.code !== void 0) {
@@ -42,6 +46,6 @@ t.stream = function(cond, onData) {
       });
     });
   });
-}
+};
 
 module.exports = t;

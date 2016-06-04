@@ -3,6 +3,9 @@ extends layout
 block stylesheets
 
 block javascripts
+  script(src='/javascripts/vendor/socket.io.js')
   script(src='/javascripts/app.js')
 
 block content
+  script.
+    app()();
