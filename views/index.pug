@@ -1,0 +1,16 @@
+extends layout
+
+block stylesheets
+
+block javascripts
+  script(src='/javascripts/vendor/d3.v3.min.js')
+  link(rel='stylesheet', href='/javascripts/vendor/leaflet/leaflet.css')
+  script(src='/javascripts/vendor/leaflet/leaflet.js')
+  script(src='/javascripts/vendor/socket.io.js')
+  link(rel='stylesheet', href='/javascripts/vendor/perfect-scrollbar/perfect-scrollbar.min.css')
+  script(src='/javascripts/vendor/perfect-scrollbar/perfect-scrollbar.min.js')
+  script(src='/javascripts/app.js')
+
+block content
+  script.
+    d3.select('body').append('div').style({height: '500px', width: '960px'}).call(app());
