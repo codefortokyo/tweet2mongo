@@ -8,4 +8,4 @@ block javascripts
 
 block content
   script.
-    app()();
+    d3.select('body').append('div').style({height: '500px', width: '960px'}).call(app());
