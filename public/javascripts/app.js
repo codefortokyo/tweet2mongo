@@ -1,52 +1,73 @@
-/* global d3 io L */
+/* global d3 io L Ps */
 
-!(function(d3, io, L) {
+!(function(d3, io, L, Ps) {
 
   var app = function() {
-    var _app = function(_) {
-      _.style('width', '960px').style('height', '500px');
-      var map = new L.Map(_.node()).setView([0, 0], 1);
+    var _data = function() {
+      var dispatcher = d3.dispatch('prepended', 'appended');
+      var list = [];
+      var socket = io();
+      var loading = false;
+      var timer = null;
+      var lastTimestamp = (new Date()).getTime();
+
+      socket.on('tweet', function(msg) {
+        list.unshift(msg);
+        dispatcher.prepended(msg);
+      });
+      d3.rebind(this, dispatcher, 'on');
+
+      this.load = function() {
+        if (loading) {
+          return;
+        }
+        if (timer != null) {
+          clearTimeout(timer);
+        }
+        timer = setTimeout(function() {
+          loading = true;
+          d3.json('/api/tweet?timestamp_ms=' + lastTimestamp, function(error, data) {
+            if (error != null) {
+              throw error;
+            }
+            Array.prototype.push.apply(list, data);
+            lastTimestamp = data[data.length - 1].timestamp_ms;
+            loading = false;
+            timer = null;
+            dispatcher.appended(data);
+          });
+        }, 200);
+      };
+
+      this.get = function() {
+        return list;
+      };
+
+      return this;
+    };
+    var _map = function(root, data) {
+      var viewCenter = [0, 0];
+      var viewZoom = 1;
+      var map = new L.Map(root.node()).setView(viewCenter, viewZoom);
+      var that = this;
+
       L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         attribution : '&copy; <a href=\'http://osm.org/copyright\'>OpenStreetMap</a> contributors'
       }).addTo(map);
-
-      var svgLayer = d3.select(map.getPanes().overlayPane).append('svg').attr('class', 'leaflet-zoom-hide');
-      var plotLayer = svgLayer.append('g');
-
-      var updatePosition = function(d)
-      {
-        d.pos = map.latLngToLayerPoint(new L.LatLng(d[1], d[0]));
-        d3.select(this).attr( {cx: d.pos.x, cy: d.pos.y} );
-      };
-
-      var updateTextPosition = function(d)
-      {
-        d.pos = map.latLngToLayerPoint(new L.LatLng(d[1], d[0]));
-        d3.select(this).attr( {x: d.pos.x, y: d.pos.y} );
-      };
-
       function projectPoint(x, y) {
-        var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+        if (y === void 0) {return projectPoint(x[0], x[1]);}
+        return map.latLngToLayerPoint(new L.LatLng(y, x));
+      }
+      function projectStream(x, y) {
+        var point = projectPoint(x, y);
         this.stream.point(point.x, point.y);
       }
 
-      var transform = d3.geo.transform({point: projectPoint});
+      var transform = d3.geo.transform({point: projectStream});
       var path = d3.geo.path().projection(transform);
-      var socket = io();
-
-      socket.on('tweet', function(msg) {
-        if (msg.place !== void 0) {
-          var g = plotLayer.append('g').datum(msg).attr('opacity',1.0);
-
-/*          g.append('path').datum(msg.place.bounding_box)
-            .attr('d', path)
-            .attr('fill', 'rgba(0,0,0,0.5)');*/
-          g.append('circle').datum(d3.geo.centroid(msg.place.bounding_box)).attr({r:8, fill:'steelblue', stroke: 'white', 'stroke-width': 0.5}).each(updatePosition);
-          g.append('text').datum(d3.geo.centroid(msg.place.bounding_box)).attr({fill:'#000'}).text(msg.text).each(updateTextPosition);
-//          g.transition().delay(3000).duration(2000).attr('opacity',0.0).transition().remove();
-        }
-      });
-
+      var svgLayer = d3.select(map.getPanes().overlayPane).append('svg').attr('class', 'leaflet-zoom-hide');
+      var pathLayer = svgLayer.append('g');
+      var plotLayer = svgLayer.append('g');
       var reset = function()
       {
         var bounds = map.getBounds();
@@ -59,68 +80,103 @@
           .style('top', topLeft.y + 'px');
 
         plotLayer.attr('transform', 'translate('+ -topLeft.x + ',' + -topLeft.y + ')');
-        plotLayer.selectAll('path').attr('d', path);
-        plotLayer.selectAll('circle').each(updatePosition);
-        plotLayer.selectAll('text').each(updateTextPosition);
+        plotLayer.selectAll('circle')
+          .each(function(d) {
+            d.xy = projectPoint(d.coord);
+            d3.select(this).attr({cx: d.xy.x, cy: d.xy.y});
+          });
       };
 
+      this.setView = function(coord, zoom) {
+        map.setView(coord, zoom);
+      };
+
+      this.plotPoint = function(d) {
+        d.xy = projectPoint(d.coord);
+        plotLayer.append('circle').datum(d)
+          .attr({fill: 'steelblue', stroke: 'white', 'stroke-width': 2, r: 4, cx: d.xy.x, cy: d.xy.y, opacity: 0.8});
+        plotLayer.append('circle').datum(d)
+          .attr({fill: 'steelblue', r: 4, cx: d.xy.x, cy: d.xy.y, opacity: 0.8})
+          .transition().ease('linear').attr({r: 20, opacity: 0.0}).remove();
+      };
+
+      this.renderFeature = function(f) {
+        var p = pathLayer.append('path').datum(f);
+        p.attr('class', 'map-path')
+          .attr('d', path);
+      };
+
+      this.renderFeatureCollection = function(fc) {
+        var that = this;
+        fc.features.forEach(function(d) {
+          that.renderFeature(d);
+        });
+      };
+
+      data.on('prepended.map', function(msg) {
+        if (msg.place == null) {return;}
+        if (msg.coordinates != null) {
+          msg.coord = d3.geo.centroid(msg.coordinates);
+        } else {
+          msg.coord = d3.geo.centroid(msg.place.bounding_box);
+        }
+        that.plotPoint(msg);
+      });
+      data.on('appended.map', function(msgs) {
+        msgs.forEach(function(msg) {
+          if (msg.place == null) {return;}
+          if (msg.coordinates != null) {
+            msg.coord = d3.geo.centroid(msg.coordinates);
+          } else {
+            msg.coord = d3.geo.centroid(msg.place.bounding_box);
+          }
+          that.plotPoint(msg);
+        });
+      });
       map.on('move', reset);
       reset();
-      /*
-      var ul = _.append('ul');
-      var data = [];
+    };
 
-
-      var loadmore = d3.select('body').append('div');
-      var timestamp_ms = new Date().getTime();
-      var loading = null;
-      var socket = io();
-      var timeFormat = d3.time.format('%Y-%m-%d %H:%M:%S');
-      var textify = function(data) {
-      //  return JSON.stringify(data);
-        return timeFormat(new Date(+data.timestamp_ms)) + ' ' + JSON.stringify(data.coordinates) + ' ' + JSON.stringify(data.place) + ' ' + data.text;
-      };
-      socket.on('tweet', function(msg) {
-        ul.insert('li', 'li').text(textify(msg));
+    var _tl = function(root, data) {
+      Ps.initialize(root.node(), {
+        suppressScrollX: true
       });
-
-      var maybeFetch = function() {
-        if (loadmore.node().getBoundingClientRect().top < document.documentElement.clientHeight + 100)
-        {
-          if (loading !== null) {
-            clearTimeout(loading);
-          }
-          loading = setTimeout(function() {
-            d3.json('/api/tweet?timestamp_ms=' + timestamp_ms, function(err, data) {
-              if (err != null) {
-                load_more_tweets = null;
-                return;
-              }
-              data.forEach(function(d) {
-                ul.append('li').text(textify(d));
-              });
-              if (data.length == 0) {
-                load_more_tweets = null;
-                return;
-              }
-              timestamp_ms = data[data.length-1].timestamp_ms;
-              if (loadmore.node().getBoundingClientRect().top < document.documentElement.clientHeight + 100) {
-                maybeFetch();
-              }
-              loading = null;
-            });
-          }, 200);
-        }
+      root.style('overflow', 'hidden').style('position', 'relative')
+        .on('ps-y-reach-end', function(){data.load();});
+      var ul = root.append('ul');
+      var renderItem = function() {
+        var s = d3.select(this);
+        var head = s.append('div').attr('class', 'clearfix')
+          .style('border-bottom', 'solid 1px #CCC');
+        head.append('span').style('float', 'left').style('margin-left', '4px')
+          .text(function(d) {return d.user.screen_name;});
+        head.append('span').style('float', 'right').style('margin-right', '4px')
+          .text(function(d) {return d.created_at;});
+        var body = s.append('div');
+        body.text(function(d) {return d.text;}).style('margin', '0 12px');
       };
+      data.on('prepended.timeline', function(msg) {
+        ul.insert('li', 'li').datum(msg)
+          .each(renderItem);
+        Ps.update(root.node());
+      });
+      data.on('appended.timeline', function(msgs) {
+        msgs.forEach(function(d) {
+          ul.append('li').datum(d)
+            .each(renderItem);
+        });
+        Ps.update(root.node());
+      });
+    };
 
-      d3.select(window)
-        .on('scroll', maybeFetch)
-        .on('resize', maybeFetch)
-        .each(maybeFetch);
-      */
-
+    var _app = function(_) {
+      _.style('width', '960px').style('height', '500px').attr('class', 'clearfix');
+      var data = _data();
+      data.load();
+      _map(_.append('div').style('width', '500px').style('height', '500px').style('float', 'left'), data);
+      _tl(_.append('div').style('width', '460px').style('height', '500px').style('float', 'right').attr('class', 'clearfix'), data);
     };
     return _app;
   };
   this.app = app;
-}(d3, io, L));
+}(d3, io, L, Ps));
