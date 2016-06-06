@@ -1,5 +1,6 @@
 
 var twitter = require('twitter');
+var bigInt = require('big-integer');
 
 var db = require('./db');
 var config = require('./config');
@@ -15,16 +16,80 @@ var client = new twitter({
 var t = {};
 var retryMax = 10;
 var retry = retryMax;
+var rateLimit = null;
+
+
+var renewRateLimit = function(cb) {
+  if (rateLimit == null || (rateLimit.reset*1000) < new Date().getTime()) {
+    client.get('application/rate_limit_status', {resources: 'search'}, function(error, tweets) {
+      console.log('GET!!');
+      if (error != null) {
+        db.errorLog(error);
+        return cb(error, null);
+      }
+      rateLimit = tweets.resources.search['/search/tweets'];
+      cb(null, rateLimit);
+    });
+  } else {
+    cb(null, rateLimit);
+  }
+};
+
+
+t.search = function(cond) {
+  renewRateLimit(function(e, r) {
+    if (e != null) {
+      db.errorLog(e);
+      throw e;
+    }
+    console.log(r);
+    if (r.remaining <= 2) {
+      return setTimeout(function() {
+        return t.search(cond);
+      }, (r.reset * 1000) - new Date().getTime() + 200);
+    }
+    r.remaining--;
+    if (cond.count === void 0) {
+      cond.count = 100;
+    }
+    db.storeSearch(cond, 'search', function(e, search) {
+      client.get('search/tweets', cond, function(error, tweets) {
+        if (error != null) {
+          db.errorLog(error);
+          throw error;
+        }
+        if (tweets.statuses.length === 0) {
+          return;
+        }
+        tweets.statuses.forEach(function(d) {
+          db.storeTweet(d, search, function(e) {
+            if (e != null) {
+              throw e;
+            }
+          });
+        });
+        var ids = tweets.statuses.map(function(d) {return d.id_str;}).sort();
+        console.log([ids[0], ids[ids.length - 1]]);
+        var _cond = {};
+        Object.keys(cond).forEach(function(k) {
+          _cond[k] = cond[k];
+        });
+        _cond.max_id = bigInt(ids[0]).add(-1).toString();
+        t.search(_cond);
+      });
+    });
+  });
+};
 
 t.stream = function(cond, onData) {
   if (retry-- < 0) {
     throw new Error('can\'t establish twitter connection.');
   }
-  db.storeSearch(cond, function(e, search) {
+  db.storeSearch(cond, 'stream', function(e, search) {
     client.stream('statuses/filter', cond, function(stream) {
       retry = retryMax;
       stream.on('data', function(data) {
-        db.storeTweet(data, search, function() {
+        db.storeTweet(data, search, function(e) {
           if (e != null) {
             throw e;
           }
@@ -47,5 +112,6 @@ t.stream = function(cond, onData) {
     });
   });
 };
+
 
 module.exports = t;

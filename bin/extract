@@ -39,7 +39,7 @@ var iter = function() {
     }
     res.forEach(function(d) {
       var p = pointify(d);
-      stringifier.write([d.id_str, new Date(d.created_at).getTime(), p[0], p[1], d.user.screen_name, d.text]);
+      stringifier.write([d.id_str, d.timestamp_ms, p[0], p[1], d.lang, d.user.screen_name, d.text]);
     });
     skip += limit;
     iter();

@@ -83,16 +83,16 @@ db.errorLog = function(error) {
   });
 };
 
-db.storeSearch = function(s, cb) {
+db.storeSearch = function(s, type, cb) {
   enter(function (e, c) {
     if (e != null) {
       return cb(e, null);
     }
-    c.collection('search').findOne({condition: s}, function(err, doc) {
+    c.collection('search').findOne({condition: s, type: type}, function(err, doc) {
       if (err != null) {
         db.errorLog(err);
         client = null;
-        return db.storeSearch(s, cb);
+        return db.storeSearch(s, type, cb);
       }
       if (doc != null) {
         searchLog(doc);
@@ -100,6 +100,7 @@ db.storeSearch = function(s, cb) {
       } else {
         var _doc = {
           _id: shortid.generate(),
+          type: type,
           condition: s
         };
         searchLog(_doc);
@@ -107,7 +108,7 @@ db.storeSearch = function(s, cb) {
           if (err != null) {
             db.errorLog(err);
             client = null;
-            return db.storeSearch(s, cb);
+            return db.storeSearch(s, type, cb);
           }
           cb(null, doc);
         });
