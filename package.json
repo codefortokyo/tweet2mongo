@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/codefortokyo/tweet-stream#readme",
   "dependencies": {
+    "argv": "0.0.2",
     "big-integer": "^1.6.15",
     "body-parser": "~1.13.2",
     "cookie-parser": "~1.3.5",

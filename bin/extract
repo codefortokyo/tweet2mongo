@@ -27,7 +27,7 @@ function pointify(d) {
 var skip = 0;
 var limit = 1000;
 stringifier.pipe(process.stdout);
-stringifier.write(['id', 'timestamp', 'longitude', 'latitude', 'user', 'text']);
+stringifier.write(['id', 'timestamp', 'longitude', 'latitude', 'lang', 'user', 'text']);
 var iter = function() {
   db.getTweet({timestamp_ms:{$lt: ts_to, $gte: ts_from}}, {skip: skip, limit: limit}, function(err, res) {
     if (err != null) {
